@@ -1,4 +1,4 @@
-# MARCOS (v2.0) — Multimodal AI Research & Creative OS
+# MARCOS — Multimodal AI Research & Creative OS
 
 **marcos** is an intelligent, context-aware AI assistant and research operating system powered by the **Google Gemini API**. It provides a centralized, friction-free workspace where users can ask complex questions, analyze multi-format data, extract insights from documents, and run generated Python code structures seamlessly.
 
@@ -31,5 +31,4 @@ To run **marcos** locally, follow these simple steps:
 
 1. **Clone the Repository:**
    ```bash
-   git clone [https://github.com/YOUR_USERNAME/marcos.git](https://github.com/YOUR_USERNAME/marcos.git)
-   cd marcos
+   git clone(https://github.com/kuldeep811p/MARCOS)
