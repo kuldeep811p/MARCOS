@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>marcos · Multimodal AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Newsreader:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet" />
+
+<style>
+/* ── Reset & tokens ────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:     #0e0d0b;
+  --paper:   #f2ede4;
+  --amber:   #e8a020;
+  --dim:     #8a8278;
+  --rule:    #ccc7bc;
+  --card:    #e9e4da;
+  --code-bg: #1a1916;
+  --mono:    'IBM Plex Mono', monospace;
+  --serif:   'Newsreader', Georgia, serif;
+  --display: 'Bebas Neue', sans-serif;
+}
+
+html { font-size: 16px; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* grain */
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 160px; opacity: .45;
+}
+
+/* ── Shell ─────────────────────────────────────────────────────────── */
+.shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+
+/* ── Sidebar ───────────────────────────────────────────────────────── */
+.sidebar {
+  background: var(--ink); color: var(--paper);
+  padding: 2.4rem 1.8rem;
+  border-right: 3px solid var(--amber);
+  display: flex; flex-direction: column; gap: 2.2rem;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  animation: slideIn .55s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes slideIn { from { transform:translateX(-28px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+
+.sidebar-logo { font-family:var(--display); font-size:3.6rem; letter-spacing:.04em; color:var(--amber); line-height:.9; }
+.sidebar-logo span { display:block; font-family:var(--mono); font-size:.6rem; letter-spacing:.22em; text-transform:uppercase; color:#5a5650; margin-top:.5rem; }
+.sidebar-section { display:flex; flex-direction:column; gap:.7rem; }
+.sidebar-label { font-family:var(--mono); font-size:.62rem; letter-spacing:.18em; text-transform:uppercase; color:#5a5650; }
+
+input[type="password"], select {
+  width:100%; background:#1a1916; border:1px solid #2e2c28; border-radius:4px;
+  color:var(--paper); font-family:var(--mono); font-size:.82rem;
+  padding:.55rem .75rem; outline:none; transition:border-color .2s; appearance:none;
+}
+input[type="password"]:focus, select:focus { border-color:var(--amber); }
+input[type="password"]::placeholder { color:#3a3830; }
+
+.range-wrap { display:flex; flex-direction:column; gap:.4rem; }
+.range-row  { display:flex; justify-content:space-between; align-items:center; }
+.range-val  { font-family:var(--mono); font-size:.78rem; color:var(--amber); }
+
+input[type="range"] { -webkit-appearance:none; width:100%; height:2px; background:#2e2c28; border-radius:2px; outline:none; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--amber); cursor:pointer; transition:transform .15s; }
+input[type="range"]::-webkit-slider-thumb:hover { transform:scale(1.3); }
+
+.sidebar-footer { margin-top:auto; font-family:var(--mono); font-size:.6rem; color:#2e2c28; letter-spacing:.1em; line-height:1.8; }
+
+/* ── Main ──────────────────────────────────────────────────────────── */
+.main { display:flex; flex-direction:column; animation: fadeUp .6s .1s cubic-bezier(.22,1,.36,1) both; }
+@keyframes fadeUp { from { transform:translateY(18px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+
+/* topbar */
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 2.8rem; border-bottom:1px solid var(--rule); }
+.topbar-breadcrumb { font-family:var(--mono); font-size:.72rem; color:var(--dim); letter-spacing:.08em; }
+.topbar-pill { font-family:var(--mono); font-size:.65rem; letter-spacing:.16em; text-transform:uppercase; padding:.28rem .85rem; border:1px solid var(--amber); border-radius:999px; color:var(--amber); }
+
+/* hero */
+.hero { padding:3.5rem 2.8rem 2.6rem; border-bottom:1px solid var(--rule); position:relative; overflow:hidden; }
+.hero::after { content:'M'; position:absolute; right:-.05em; top:-.15em; font-family:var(--display); font-size:22rem; color:rgba(0,0,0,.03); pointer-events:none; line-height:1; }
+.hero-eyebrow { font-family:var(--mono); font-size:.68rem; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); margin-bottom:1rem; }
+.hero-title { font-family:var(--display); font-size:clamp(4rem,9vw,7rem); letter-spacing:.03em; line-height:.9; color:var(--ink); }
+.hero-title em { font-style:normal; color:var(--amber); }
+.hero-desc { max-width:560px; margin-top:1.4rem; font-size:1.05rem; font-weight:300; font-style:italic; color:#555048; line-height:1.75; }
+
+/* tabs */
+.tabs { display:flex; border-bottom:1px solid var(--rule); }
+.tab-btn { font-family:var(--mono); font-size:.75rem; letter-spacing:.14em; text-transform:uppercase; padding:1rem 2rem; border:none; background:transparent; color:var(--dim); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .2s, border-color .2s; }
+.tab-btn:hover { color:var(--ink); }
+.tab-btn.active { color:var(--ink); border-bottom-color:var(--amber); }
+
+/* panels */
+.tab-panel { display:none; padding:2.5rem 2.8rem; flex-direction:column; gap:1.4rem; }
+.tab-panel.active { display:flex; }
+.field-label { font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--dim); margin-bottom:.4rem; }
+
+textarea {
+  width:100%; min-height:160px; background:var(--card);
+  border:1px solid var(--rule); border-radius:4px;
+  color:var(--ink); font-family:var(--mono); font-size:.88rem;
+  line-height:1.65; padding:1rem 1.2rem; resize:vertical; outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+textarea:focus { border-color:var(--amber); box-shadow:0 0 0 3px rgba(232,160,32,.12); }
+textarea::placeholder { color:#aaa49b; }
+
+/* dropzone */
+.dropzone { border:1.5px dashed var(--rule); border-radius:4px; padding:2.2rem; text-align:center; cursor:pointer; transition:border-color .2s, background .2s; position:relative; background:var(--card); }
+.dropzone:hover, .dropzone.over { border-color:var(--amber); background:#ede8dd; }
+.dropzone input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.dropzone-icon { font-size:2rem; margin-bottom:.6rem; display:block; color:var(--dim); }
+.dropzone-text { font-family:var(--mono); font-size:.78rem; color:var(--dim); letter-spacing:.06em; }
+.dropzone-text strong { color:var(--amber); }
+.dropzone-filename { margin-top:.6rem; font-family:var(--mono); font-size:.75rem; color:var(--ink); font-weight:500; }
+
+/* run button */
+.run-btn { align-self:flex-start; display:flex; align-items:center; gap:.6rem; background:var(--ink); color:var(--amber); font-family:var(--mono); font-size:.82rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; border:2px solid var(--ink); border-radius:4px; padding:.7rem 1.8rem; cursor:pointer; transition:background .2s, color .2s, transform .15s; }
+.run-btn:hover { background:var(--amber); color:var(--ink); border-color:var(--amber); transform:translateY(-2px); }
+.run-btn:active { transform:translateY(0); }
+.run-btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+.spinner { display:none; width:14px; height:14px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── status ─ */
+.status-msg { display:none; font-family:var(--mono); font-size:.8rem; padding:.75rem 1.1rem; border-radius:4px; margin:0 2.8rem; }
+.status-msg.error   { background:#fde8e8; border:1px solid #f5a0a0; color:#8b1c1c; }
+.status-msg.warning { background:#fef3cd; border:1px solid #f5d060; color:#7a5a00; }
+.status-msg.visible { display:block; }
+
+/* ── Response area ─────────────────────────────────────────────────── */
+.response-wrap { padding:0 2.8rem 3rem; display:none; flex-direction:column; gap:0; animation:fadeUp .4s cubic-bezier(.22,1,.36,1) both; }
+.response-wrap.visible { display:flex; }
+
+.response-header { display:flex; align-items:center; justify-content:space-between; padding:.9rem 0; border-top:2px solid var(--amber); border-bottom:1px solid var(--rule); margin-bottom:1.6rem; }
+.response-tag { font-family:var(--mono); font-size:.65rem; letter-spacing:.2em; text-transform:uppercase; color:var(--amber); }
+.copy-all-btn { font-family:var(--mono); font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; border:1px solid var(--rule); background:transparent; color:var(--dim); border-radius:3px; padding:.28rem .7rem; cursor:pointer; transition:border-color .2s, color .2s; }
+.copy-all-btn:hover { border-color:var(--ink); color:var(--ink); }
+
+/* rendered markdown body */
+.response-body { display:flex; flex-direction:column; gap:1.1rem; }
+
+.md-p { font-size:1rem; font-weight:300; line-height:1.85; color:var(--ink); }
+.md-h1 { font-family:var(--display); font-size:2.2rem; letter-spacing:.03em; color:var(--ink); margin-top:.4rem; }
+.md-h2 { font-family:var(--display); font-size:1.6rem; letter-spacing:.03em; color:var(--ink); border-bottom:1px solid var(--rule); padding-bottom:.4rem; }
+.md-h3 { font-family:var(--mono); font-size:.9rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); }
+.md-ul, .md-ol { padding-left:1.6rem; display:flex; flex-direction:column; gap:.4rem; }
+.md-li { font-size:.97rem; line-height:1.7; color:var(--ink); }
+.md-blockquote { border-left:3px solid var(--amber); padding:.6rem 1.2rem; background:var(--card); font-style:italic; color:#555048; border-radius:0 4px 4px 0; }
+.md-hr { border:none; border-top:1px solid var(--rule); }
+
+/* inline code */
+.md-p code, .md-li code {
+  font-family:var(--mono); font-size:.82rem;
+  background:var(--card); padding:.12em .4em;
+  border-radius:3px; border:1px solid var(--rule);
+  color:#c0392b;
+}
+
+/* ── Code block ────────────────────────────────────────────────────── */
+.code-block-wrap {
+  background: var(--code-bg);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #2e2c28;
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .5rem 1rem;
+  background: #111009;
+  border-bottom: 1px solid #2e2c28;
+}
+
+.code-lang-badge {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.code-actions { display:flex; gap:.5rem; align-items:center; }
+
+.code-action-btn {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  border: 1px solid #2e2c28;
+  background: transparent;
+  color: #7a7570;
+  border-radius: 3px;
+  padding: .22rem .65rem;
+  cursor: pointer;
+  transition: border-color .18s, color .18s, background .18s;
+}
+.code-action-btn:hover { border-color: var(--amber); color: var(--amber); }
+.code-action-btn.run-code-btn { color: #4caf88; border-color: #2e4a3a; }
+.code-action-btn.run-code-btn:hover { background:#1a2e24; border-color:#4caf88; }
+
+pre {
+  margin: 0;
+  padding: 1.1rem 1.2rem;
+  overflow-x: auto;
+  background: transparent;
+}
+pre code {
+  font-family: var(--mono);
+  font-size: .84rem;
+  line-height: 1.7;
+  color: #d4d1cb;
+  background: none;
+  border: none;
+  padding: 0;
+  white-space: pre;
+}
+
+/* syntax tokens */
+.tok-kw    { color: #c792ea; }
+.tok-str   { color: #c3e88d; }
+.tok-num   { color: #f78c6c; }
+.tok-cmt   { color: #546e7a; font-style:italic; }
+.tok-fn    { color: #82aaff; }
+.tok-cls   { color: #ffcb6b; }
+.tok-punct { color: #89ddff; }
+.tok-tag   { color: #f07178; }
+.tok-attr  { color: #ffcb6b; }
+
+/* ── Run output panel ──────────────────────────────────────────────── */
+.run-output {
+  display: none;
+  border-top: 1px solid #2e2c28;
+  background: #0b0a09;
+  flex-direction: column;
+}
+.run-output.visible { display:flex; }
+.run-output-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.4rem 1rem;
+  background: #111009;
+  border-bottom:1px solid #1e1c18;
+}
+.run-output-label { font-family:var(--mono); font-size:.6rem; letter-spacing:.18em; text-transform:uppercase; color:#4caf88; }
+.run-close-btn { font-family:var(--mono); font-size:.62rem; color:#5a5650; border:none; background:transparent; cursor:pointer; letter-spacing:.1em; }
+.run-close-btn:hover { color:#d4d1cb; }
+
+/* JS console output */
+.console-output {
+  font-family: var(--mono);
+  font-size: .8rem;
+  line-height: 1.7;
+  color: #d4d1cb;
+  padding: .8rem 1.2rem;
+  max-height: 240px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.console-log   { color: #d4d1cb; }
+.console-error { color: #f07178; }
+.console-warn  { color: #ffcb6b; }
+
+/* HTML preview iframe */
+.preview-iframe {
+  width: 100%; height: 320px; border: none;
+  background: #fff;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position:static; height:auto; border-right:none; border-bottom:3px solid var(--amber); }
+  .hero-title { font-size:3.8rem; }
+  .tab-panel, .topbar, .hero, .response-wrap, .status-msg { padding-left:1.4rem; padding-right:1.4rem; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ── Sidebar ─────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div>
+    <div class="sidebar-logo">marcos<span>Multimodal AI OS</span></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Gemini API Key</div>
+    <input type="password" id="apiKey" placeholder="AIza···" autocomplete="off" />
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Model</div>
+    <select id="modelSelect">
+      <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+      <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+      <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+    </select>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Temperature</div>
+    <div class="range-wrap">
+      <div class="range-row">
+        <span style="font-family:var(--mono);font-size:.72rem;color:#5a5650;">precision ↔ creative</span>
+        <span class="range-val" id="tempVal">1.0</span>
+      </div>
+      <input type="range" id="tempRange" min="0" max="2" step="0.05" value="1.0" />
+    </div>
+  </div>
+  <div class="sidebar-footer">marcos v2.0<br>powered by Google Gemini<br>© 2025</div>
+</aside>
+
+<!-- ── Main ────────────────────────────────────────────────────────── -->
+<main class="main">
+
+  <div class="topbar">
+    <span class="topbar-breadcrumb">workspace / new session</span>
+    <span class="topbar-pill">● Live</span>
+  </div>
+
+  <div class="hero">
+    <p class="hero-eyebrow">Multimodal AI Research &amp; Creative OS</p>
+    <h1 class="hero-title">MARC<em>O</em>S</h1>
+    <p class="hero-desc">Ask complex questions, analyze images, extract data from documents, and run generated code directly in the browser — all in one place.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="text">✦ Text prompt</button>
+    <button class="tab-btn" data-tab="file">⊕ File + prompt</button>
+  </div>
+
+  <!-- Text panel -->
+  <div class="tab-panel active" id="panel-text">
+    <div>
+      <div class="field-label">Your prompt</div>
+      <textarea id="textPrompt" placeholder="Ask anything — explain, summarize, translate, write code, brainstorm…"></textarea>
+    </div>
+    <button class="run-btn" id="runText">
+      <span class="spinner" id="spinText"></span><span>Run →</span>
+    </button>
+  </div>
+
+  <!-- File panel -->
+  <div class="tab-panel" id="panel-file">
+    <div>
+      <div class="field-label">File (image, PDF, or text)</div>
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept="image/*,.pdf,.txt,.md,.csv" />
+        <span class="dropzone-icon">⊕</span>
+        <div class="dropzone-text"><strong>Click to upload</strong> or drag &amp; drop<br>PNG · JPG · WebP · GIF · PDF · TXT · CSV</div>
+        <div class="dropzone-filename" id="filename"></div>
+      </div>
+    </div>
+    <div>
+      <div class="field-label">Instruction / question about the file</div>
+      <textarea id="filePrompt" placeholder="Describe what you'd like marcos to do with the file above…"></textarea>
+    </div>
+    <button class="run-btn" id="runFile">
+      <span class="spinner" id="spinFile"></span><span>Run →</span>
+    </button>
+  </div>
+
+  <div class="status-msg" id="statusMsg"></div>
+
+  <!-- Response -->
+  <div class="response-wrap" id="responseWrap">
+    <div class="response-header">
+      <span class="response-tag">↳ marcos response</span>
+      <button class="copy-all-btn" id="copyAllBtn">Copy all</button>
+    </div>
+    <div class="response-body" id="responseBody"></div>
+  </div>
+
+</main>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   TABS
+════════════════════════════════════════════════════════════ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    hideStatus(); hideResponse();
+  });
+});
+
+/* ════════════════════════════════════════════════════════════
+   TEMPERATURE
+════════════════════════════════════════════════════════════ */
+const tempRange = document.getElementById('tempRange');
+const tempVal   = document.getElementById('tempVal');
+tempRange.addEventListener('input', () => tempVal.textContent = parseFloat(tempRange.value).toFixed(2));
+
+/* ════════════════════════════════════════════════════════════
+   FILE DROP ZONE
+════════════════════════════════════════════════════════════ */
+const dz        = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const filename  = document.getElementById('filename');
+
+['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => dz.addEventListener(ev, () => dz.classList.remove('over')));
+dz.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer.files[0]) { fileInput.files = e.dataTransfer.files; updateFilename(); } });
+fileInput.addEventListener('change', updateFilename);
+function updateFilename() { filename.textContent = fileInput.files[0] ? '📄 ' + fileInput.files[0].name : ''; }
+
+/* ════════════════════════════════════════════════════════════
+   UI HELPERS
+════════════════════════════════════════════════════════════ */
+function showStatus(msg, type = 'error') {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg; el.className = `status-msg ${type} visible`;
+}
+function hideStatus() { document.getElementById('statusMsg').className = 'status-msg'; }
+function hideResponse() { document.getElementById('responseWrap').classList.remove('visible'); }
+function setLoading(btnId, spinId, loading) {
+  document.getElementById(btnId).disabled = loading;
+  document.getElementById(spinId).style.display = loading ? 'block' : 'none';
+}
+
+/* ════════════════════════════════════════════════════════════
+   SYNTAX HIGHLIGHTER  (JS / Python / HTML / CSS / generic)
+════════════════════════════════════════════════════════════ */
+function highlight(code, lang) {
+  // escape HTML first
+  let s = code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const L = (lang || '').toLowerCase();
+
+  if (L === 'html' || L === 'xml') {
+    s = s
+      .replace(/(&lt;\/?)([\w-]+)/g, '<span class="tok-tag">$1$2</span>')
+      .replace(/([\w-]+)(=&quot;)/g, '<span class="tok-attr">$1</span>$2')
+      .replace(/(&quot;[^&]*&quot;)/g, '<span class="tok-str">$1</span>')
+      .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="tok-cmt">$1</span>');
+    return s;
+  }
+
+  if (L === 'css') {
+    s = s
+      .replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="tok-cmt">$1</span>')
+      .replace(/([.#]?[\w-]+)(\s*\{)/g, '<span class="tok-cls">$1</span>$2')
+      .replace(/([\w-]+)(\s*:)/g, '<span class="tok-attr">$1</span>$2')
+      .replace(/:\s*([^;{}\n]+)/g, ': <span class="tok-str">$1</span>');
+    return s;
+  }
+
+  // JS / TS / Python / generic
+  const kwJS  = /\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|new|this|typeof|instanceof|true|false|null|undefined|try|catch|finally|throw|of|in|switch|case|break|continue|default|delete|void|yield)\b/g;
+  const kwPy  = /\b(def|class|return|if|elif|else|for|while|import|from|as|with|try|except|finally|raise|True|False|None|and|or|not|in|is|pass|lambda|global|nonlocal|del|yield|async|await)\b/g;
+
+  s = s
+    .replace(/(#[^\n]*|\/\/[^\n]*)/g, '<span class="tok-cmt">$1</span>')
+    .replace(/("""[\s\S]*?"""|'''[\s\S]*?'''|`[^`]*`|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g, '<span class="tok-str">$1</span>')
+    .replace(/\b(\d+\.?\d*(?:e[+-]?\d+)?)\b/g, '<span class="tok-num">$1</span>');
+
+  if (L === 'python' || L === 'py') {
+    s = s.replace(kwPy, '<span class="tok-kw">$1</span>');
+  } else {
+    s = s.replace(kwJS, '<span class="tok-kw">$1</span>');
+  }
+
+  s = s
+    .replace(/\b([A-Z][A-Za-z0-9_]+)\b/g, '<span class="tok-cls">$1</span>')
+    .replace(/\b([a-z_][a-zA-Z0-9_]*)(?=\s*\()/g, '<span class="tok-fn">$1</span>')
+    .replace(/([{}[\]();,.])/g, '<span class="tok-punct">$1</span>');
+
+  return s;
+}
+
+/* ════════════════════════════════════════════════════════════
+   MARKDOWN → DOM  (proper block parser)
+════════════════════════════════════════════════════════════ */
+let rawResponseText = '';
+
+function renderMarkdown(md) {
+  rawResponseText = md;
+  const container = document.getElementById('responseBody');
+  container.innerHTML = '';
+
+  // Split into blocks by fenced code or blank lines
+  const blocks = [];
+  const lines = md.split('\n');
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Fenced code block
+    const fenceMatch = line.match(/^```(\w*)\s*$/);
+    if (fenceMatch) {
+      const lang = fenceMatch[1] || 'plaintext';
+      const codeLines = [];
+      i++;
+      while (i < lines.length && !lines[i].startsWith('```')) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      i++; // skip closing ```
+      blocks.push({ type: 'code', lang, content: codeLines.join('\n') });
+      continue;
+    }
+
+    // Skip empty lines (used as separators)
+    if (line.trim() === '') { i++; continue; }
+
+    // Headings
+    if (/^### /.test(line)) { blocks.push({ type: 'h3', content: line.slice(4) }); i++; continue; }
+    if (/^## /.test(line))  { blocks.push({ type: 'h2', content: line.slice(3) }); i++; continue; }
+    if (/^# /.test(line))   { blocks.push({ type: 'h1', content: line.slice(2) }); i++; continue; }
+
+    // HR
+    if (/^---+$/.test(line.trim())) { blocks.push({ type: 'hr' }); i++; continue; }
+
+    // Blockquote
+    if (/^> /.test(line)) {
+      const qLines = [];
+      while (i < lines.length && /^> /.test(lines[i])) { qLines.push(lines[i].slice(2)); i++; }
+      blocks.push({ type: 'blockquote', content: qLines.join('\n') });
+      continue;
+    }
+
+    // Lists
+    if (/^[-*] /.test(line)) {
+      const items = [];
+      while (i < lines.length && /^[-*] /.test(lines[i])) { items.push(lines[i].slice(2)); i++; }
+      blocks.push({ type: 'ul', items }); continue;
+    }
+    if (/^\d+\. /.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\d+\. /.test(lines[i])) { items.push(lines[i].replace(/^\d+\. /,'')); i++; }
+      blocks.push({ type: 'ol', items }); continue;
+    }
+
+    // Paragraph — collect consecutive non-special lines
+    const paraLines = [];
+    while (i < lines.length) {
+      const l = lines[i];
+      if (l.trim() === '' || /^(```|#|> |[-*] |\d+\. |---)/.test(l)) break;
+      paraLines.push(l);
+      i++;
+    }
+    if (paraLines.length) blocks.push({ type: 'p', content: paraLines.join(' ') });
+  }
+
+  // Render blocks to DOM
+  blocks.forEach(block => {
+    let el;
+    switch (block.type) {
+      case 'h1': el = document.createElement('div'); el.className='md-h1'; el.innerHTML=inlineFormat(block.content); break;
+      case 'h2': el = document.createElement('div'); el.className='md-h2'; el.innerHTML=inlineFormat(block.content); break;
+      case 'h3': el = document.createElement('div'); el.className='md-h3'; el.innerHTML=inlineFormat(block.content); break;
+      case 'hr': el = document.createElement('hr'); el.className='md-hr'; break;
+      case 'blockquote': el=document.createElement('div'); el.className='md-blockquote'; el.innerHTML=inlineFormat(block.content); break;
+      case 'ul': {
+        el = document.createElement('ul'); el.className='md-ul';
+        block.items.forEach(it => { const li=document.createElement('li'); li.className='md-li'; li.innerHTML=inlineFormat(it); el.appendChild(li); });
+        break;
+      }
+      case 'ol': {
+        el = document.createElement('ol'); el.className='md-ol';
+        block.items.forEach(it => { const li=document.createElement('li'); li.className='md-li'; li.innerHTML=inlineFormat(it); el.appendChild(li); });
+        break;
+      }
+      case 'p': el=document.createElement('p'); el.className='md-p'; el.innerHTML=inlineFormat(block.content); break;
+      case 'code': el=buildCodeBlock(block.lang, block.content); break;
+      default: return;
+    }
+    if (el) container.appendChild(el);
+  });
+}
+
+/* inline: bold, italic, inline-code, links */
+function inlineFormat(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--amber)">$1</a>');
+}
+
+/* ════════════════════════════════════════════════════════════
+   CODE BLOCK BUILDER
+════════════════════════════════════════════════════════════ */
+function buildCodeBlock(lang, code) {
+  const wrap = document.createElement('div');
+  wrap.className = 'code-block-wrap';
+
+  // header
+  const header = document.createElement('div');
+  header.className = 'code-block-header';
+
+  const badge = document.createElement('span');
+  badge.className = 'code-lang-badge';
+  badge.textContent = lang || 'code';
+
+  const actions = document.createElement('div');
+  actions.className = 'code-actions';
+
+  // copy button
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'code-action-btn';
+  copyBtn.textContent = 'Copy';
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(code).then(() => {
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+    });
+  });
+  actions.appendChild(copyBtn);
+
+  // run button — shown for runnable languages
+  const runnable = ['javascript','js','html','python','py','css'].includes((lang||'').toLowerCase());
+  if (runnable) {
+    const runBtn = document.createElement('button');
+    runBtn.className = 'code-action-btn run-code-btn';
+    runBtn.textContent = '▶ Run';
+    runBtn.addEventListener('click', () => runCodeBlock(lang, code, outputDiv));
+    actions.appendChild(runBtn);
+  }
+
+  header.appendChild(badge);
+  header.appendChild(actions);
+  wrap.appendChild(header);
+
+  // code
+  const pre = document.createElement('pre');
+  const codeEl = document.createElement('code');
+  codeEl.innerHTML = highlight(code, lang);
+  pre.appendChild(codeEl);
+  wrap.appendChild(pre);
+
+  // output area (hidden until run)
+  const outputDiv = document.createElement('div');
+  outputDiv.className = 'run-output';
+  wrap.appendChild(outputDiv);
+
+  return wrap;
+}
+
+/* ════════════════════════════════════════════════════════════
+   CODE RUNNER
+════════════════════════════════════════════════════════════ */
+function runCodeBlock(lang, code, outputDiv) {
+  const L = (lang || '').toLowerCase();
+  outputDiv.innerHTML = '';
+
+  // header row
+  const hdr = document.createElement('div');
+  hdr.className = 'run-output-header';
+  const lbl = document.createElement('span');
+  lbl.className = 'run-output-label';
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'run-close-btn';
+  closeBtn.textContent = '✕ close';
+  closeBtn.addEventListener('click', () => outputDiv.classList.remove('visible'));
+  hdr.appendChild(lbl);
+  hdr.appendChild(closeBtn);
+  outputDiv.appendChild(hdr);
+  outputDiv.classList.add('visible');
+
+  if (L === 'html') {
+    lbl.textContent = '▶ html preview';
+    const iframe = document.createElement('iframe');
+    iframe.className = 'preview-iframe';
+    iframe.sandbox = 'allow-scripts allow-same-origin';
+    outputDiv.appendChild(iframe);
+    iframe.srcdoc = code;
+
+  } else if (L === 'javascript' || L === 'js') {
+    lbl.textContent = '▶ console output';
+    const console_div = document.createElement('div');
+    console_div.className = 'console-output';
+    outputDiv.appendChild(console_div);
+
+    // capture console
+    const logs = [];
+    const origLog   = console.log;
+    const origError = console.error;
+    const origWarn  = console.warn;
+
+    const cap = (cls) => (...args) => {
+      const line = document.createElement('div');
+      line.className = cls;
+      line.textContent = args.map(a => {
+        try { return typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a); }
+        catch { return String(a); }
+      }).join(' ');
+      console_div.appendChild(line);
+    };
+
+    console.log   = cap('console-log');
+    console.error = cap('console-error');
+    console.warn  = cap('console-warn');
+
+    try {
+      const fn = new Function(code);
+      const result = fn();
+      if (result !== undefined) {
+        const line = document.createElement('div');
+        line.className = 'console-log';
+        line.textContent = '← ' + (typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result));
+        console_div.appendChild(line);
+      }
+    } catch(e) {
+      const line = document.createElement('div');
+      line.className = 'console-error';
+      line.textContent = '✖ ' + e.message;
+      console_div.appendChild(line);
+    } finally {
+      console.log   = origLog;
+      console.error = origError;
+      console.warn  = origWarn;
+    }
+
+    if (!console_div.children.length) {
+      console_div.textContent = '(no output)';
+    }
+
+  } else if (L === 'css') {
+    lbl.textContent = '▶ css preview';
+    const iframe = document.createElement('iframe');
+    iframe.className = 'preview-iframe';
+    iframe.sandbox = 'allow-scripts allow-same-origin';
+    outputDiv.appendChild(iframe);
+    iframe.srcdoc = `<html><head><style>${code}</style></head><body><div class="box">CSS Preview — add HTML elements here to see styles applied</div></body></html>`;
+
+  } else if (L === 'python' || L === 'py') {
+    lbl.textContent = '▶ python note';
+    const note = document.createElement('div');
+    note.className = 'console-output';
+    note.innerHTML = '<span class="console-warn">⚠ Python runs server-side. Copy this code and run it in your local environment or a service like <a href="https://repl.it" target="_blank" style="color:var(--amber)">repl.it</a>.</span>';
+    outputDiv.appendChild(note);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   SHOW / HIDE RESPONSE
+════════════════════════════════════════════════════════════ */
+function showResponse(md) {
+  const wrap = document.getElementById('responseWrap');
+  renderMarkdown(md);
+  wrap.classList.add('visible');
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* copy-all */
+document.getElementById('copyAllBtn').addEventListener('click', () => {
+  navigator.clipboard.writeText(rawResponseText).then(() => {
+    const btn = document.getElementById('copyAllBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy all', 2000);
+  });
+});
+
+/* ════════════════════════════════════════════════════════════
+   GEMINI API
+════════════════════════════════════════════════════════════ */
+async function callGemini(model, apiKey, temperature, parts) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts }],
+      generationConfig: { temperature: parseFloat(temperature) }
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '(empty response)';
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ── Text run ──────────────────────────────────────────────────────── */
+document.getElementById('runText').addEventListener('click', async () => {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const model  = document.getElementById('modelSelect').value;
+  const temp   = tempRange.value;
+  const prompt = document.getElementById('textPrompt').value.trim();
+  hideStatus(); hideResponse();
+  if (!apiKey) return showStatus('⚠ Enter your Gemini API Key in the sidebar.');
+  if (!prompt) return showStatus('⚠ Enter a prompt before running.', 'warning');
+  setLoading('runText','spinText', true);
+  try {
+    const result = await callGemini(model, apiKey, temp, [{ text: prompt }]);
+    showResponse(result);
+  } catch(e) { showStatus('✖ ' + e.message); }
+  finally { setLoading('runText','spinText', false); }
+});
+
+/* ── File + prompt run ─────────────────────────────────────────────── */
+document.getElementById('runFile').addEventListener('click', async () => {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const model  = document.getElementById('modelSelect').value;
+  const temp   = tempRange.value;
+  const prompt = document.getElementById('filePrompt').value.trim();
+  const file   = fileInput.files[0];
+  hideStatus(); hideResponse();
+  if (!apiKey) return showStatus('⚠ Enter your Gemini API Key in the sidebar.');
+  if (!file && !prompt) return showStatus('⚠ Upload a file or enter a prompt.', 'warning');
+  setLoading('runFile','spinFile', true);
+  try {
+    const parts = [];
+    if (file) {
+      const b64  = await fileToBase64(file);
+      const mime = file.type || 'application/octet-stream';
+      if (mime.startsWith('image/') || mime === 'application/pdf') {
+        parts.push({ inlineData: { mimeType: mime, data: b64 } });
+      } else {
+        parts.push({ text: `[File: ${file.name}]\n${atob(b64)}` });
+      }
+    }
+    if (prompt) parts.push({ text: prompt });
+    const result = await callGemini(model, apiKey, temp, parts);
+    showResponse(result);
+  } catch(e) { showStatus('✖ ' + e.message); }
+  finally { setLoading('runFile','spinFile', false); }
+});
+</script>
+</body>
+</html>
